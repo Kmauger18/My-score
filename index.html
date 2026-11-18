@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Score – À quel point tu craques ?</title>
+<meta name="description" content="Deux curseurs de 0 à 100 : le tien et celui de l’autre personne. Plus le chiffre est haut, plus on craque.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💘</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --nuit: #2b0f2f;
+    --nuit-clair: #4a1b4d;
+    --framboise: #ff3d6e;
+    --peche: #ffa183;
+    --rose: #ffd6e0;
+    --ivoire: #fff6f8;
+    --display: "Bagel Fat One", "Arial Rounded MT Bold", system-ui, sans-serif;
+    --texte: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--nuit);
+    color: var(--ivoire);
+    font-family: var(--texte);
+    line-height: 1.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 20px;
+    overflow-x: hidden;
+  }
+
+  main { width: 100%; max-width: 480px; text-align: center; }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    margin: 0 0 6px;
+    color: var(--rose);
+    animation: entree 0.8s cubic-bezier(.2, 1.4, .4, 1) both;
+  }
+  .sous-titre { margin: 0 0 4px; color: var(--rose); opacity: 0.85; font-size: 1.05rem; animation: entree 0.8s 0.12s cubic-bezier(.2, 1.4, .4, 1) both; }
+
+  @keyframes entree {
+    from { opacity: 0; transform: translateY(-14px) scale(0.94); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Scène : un cœur par personne */
+  .scene { position: relative; height: 220px; width: 100%; }
+
+  .coeur {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    width: 120px;
+    aspect-ratio: 100 / 90;
+    transform: translate(calc(-50% + var(--dx)), -50%) rotate(var(--rot));
+    transition: transform 0.18s ease-out;
+    z-index: 2;
+  }
+  .coeur.droite { z-index: 1; }
+
+  .coeur svg { width: 100%; height: 100%; display: block; overflow: visible; transform-origin: 50% 60%; animation: battement var(--duree, 2.4s) ease-in-out infinite; }
+  .coeur .contour { fill: var(--nuit-clair); stroke: var(--rose); stroke-width: 2.5; stroke-linejoin: round; }
+  .coeur.gauche .remplissage { fill: var(--framboise); }
+  .coeur.droite .remplissage { fill: var(--peche); }
+  .coeur .vague { fill: var(--ivoire); opacity: 0.35; }
+
+  @keyframes battement {
+    0%, 100% { transform: scale(1); }
+    18% { transform: scale(calc(1 + var(--amp, 0.02))); }
+    36% { transform: scale(1); }
+    54% { transform: scale(calc(1 + var(--amp, 0.02) * 0.7)); }
+  }
+
+  .halo {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    width: 60px;
+    height: 60px;
+    margin: -30px 0 0 -30px;
+    border: 3px solid var(--peche);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .scene.match .halo { animation: halo 1.4s ease-out infinite; }
+  .scene.match .halo.deux { animation-delay: 0.7s; }
+  @keyframes halo {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(4.2); opacity: 0; }
+  }
+
+  .flottant { position: absolute; bottom: 40%; font-size: 1rem; pointer-events: none; z-index: 3; will-change: transform, opacity; }
+
+  .message {
+    min-height: 3.2em;
+    margin: 6px 0 14px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ivoire);
+  }
+  .message.change { animation: message 0.35s ease-out; }
+  @keyframes message {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Les deux curseurs */
+  .curseur-bloc { padding: 0 4px; margin-bottom: 8px; text-align: left; }
+
+  .entete { display: flex; justify-content: space-between; align-items: baseline; }
+  label.etiquette { font-size: 1.05rem; font-weight: 700; color: var(--rose); }
+  .chiffre {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 2.4rem;
+    line-height: 1.1;
+    color: var(--ivoire);
+    font-variant-numeric: tabular-nums;
+  }
+  .a .chiffre { text-shadow: 0 2px 0 var(--framboise); }
+  .b .chiffre { text-shadow: 0 2px 0 var(--peche); }
+  .chiffre small { font-size: 1rem; opacity: 0.7; margin-left: 3px; }
+  .chiffre.saute { animation: saut 0.28s ease-out; }
+  @keyframes saut {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.14) rotate(-2deg); }
+    100% { transform: scale(1); }
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 50px;
+    background: transparent;
+    cursor: grab;
+    margin: 0;
+    touch-action: pan-y;
+    --p: 0;
+  }
+  input[type="range"]:active { cursor: grabbing; }
+
+  input.a { --c1: #ff3d6e; --c2: #ff7aa0; }
+  input.b { --c1: #ff8a63; --c2: #ffc4a8; }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 14px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--c1) 0, var(--c2) calc(var(--p) * 1%), var(--nuit-clair) calc(var(--p) * 1%), var(--nuit-clair) 100%);
+    border: 2px solid var(--rose);
+  }
+  input[type="range"]::-moz-range-track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--nuit-clair);
+    border: 2px solid var(--rose);
+  }
+  input[type="range"]::-moz-range-progress {
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--c1), var(--c2));
+  }
+
+  /* Le bouton du curseur est un petit cœur */
+  input.a::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 44px;
+    height: 40px;
+    margin-top: -13px;
+    border: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-3 -3 106 96'%3E%3Cpath d='M50 86C10 56 0 36 0 22C0 9 11 0 25 0C36 0 45 6 50 14C55 6 64 0 75 0C89 0 100 9 100 22C100 36 90 56 50 86Z' fill='%23fff6f8' stroke='%23ff3d6e' stroke-width='9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3));
+    transition: transform 0.12s ease;
+  }
+  input.b::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 44px;
+    height: 40px;
+    margin-top: -13px;
+    border: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-3 -3 106 96'%3E%3Cpath d='M50 86C10 56 0 36 0 22C0 9 11 0 25 0C36 0 45 6 50 14C55 6 64 0 75 0C89 0 100 9 100 22C100 36 90 56 50 86Z' fill='%23fff6f8' stroke='%23ffa183' stroke-width='9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3));
+    transition: transform 0.12s ease;
+  }
+  input.a::-moz-range-thumb {
+    width: 44px;
+    height: 40px;
+    border: 0;
+    border-radius: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-3 -3 106 96'%3E%3Cpath d='M50 86C10 56 0 36 0 22C0 9 11 0 25 0C36 0 45 6 50 14C55 6 64 0 75 0C89 0 100 9 100 22C100 36 90 56 50 86Z' fill='%23fff6f8' stroke='%23ff3d6e' stroke-width='9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3));
+  }
+  input.b::-moz-range-thumb {
+    width: 44px;
+    height: 40px;
+    border: 0;
+    border-radius: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-3 -3 106 96'%3E%3Cpath d='M50 86C10 56 0 36 0 22C0 9 11 0 25 0C36 0 45 6 50 14C55 6 64 0 75 0C89 0 100 9 100 22C100 36 90 56 50 86Z' fill='%23fff6f8' stroke='%23ffa183' stroke-width='9' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.3));
+  }
+  input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.2) rotate(-6deg); }
+
+  input[type="range"]:focus-visible { outline: none; }
+  input[type="range"]:focus-visible::-webkit-slider-thumb { filter: drop-shadow(0 0 6px var(--peche)); }
+  input[type="range"]:focus-visible::-moz-range-thumb { filter: drop-shadow(0 0 6px var(--peche)); }
+
+  .bornes { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--rose); opacity: 0.8; }
+
+  button.copier {
+    margin-top: 22px;
+    padding: 14px 26px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--framboise);
+    color: var(--ivoire);
+    font: 700 1rem var(--texte);
+    cursor: pointer;
+    box-shadow: 0 4px 0 #b3174a;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+  }
+  button.copier:hover { background: #ff5582; transform: translateY(-2px); box-shadow: 0 6px 0 #b3174a; }
+  button.copier:active { transform: translateY(3px); box-shadow: 0 1px 0 #b3174a; }
+  button.copier:focus-visible { outline: 3px solid var(--peche); outline-offset: 3px; }
+
+  .confirmation { min-height: 1.5em; margin: 10px 0 0; font-size: 0.95rem; color: var(--peche); }
+  .enregistre { margin: 4px 0 0; font-size: 0.85rem; color: var(--rose); opacity: 0.6; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .coeur svg, .scene.match .halo, h1, .sous-titre, .chiffre.saute, .message.change { animation: none; }
+    .coeur { transition: none; }
+    input[type="range"]::-webkit-slider-thumb { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>My Score</h1>
+  <p class="sous-titre">À quel point on craque l’un pour l’autre ?</p>
+
+  <div class="scene" id="scene" aria-hidden="true">
+    <div class="halo"></div>
+    <div class="halo deux"></div>
+
+    <div class="coeur gauche" id="coeurG">
+      <svg viewBox="0 0 100 90">
+        <defs><clipPath id="formeG"><path d="M50 86 C10 56 0 36 0 22 C0 9 11 0 25 0 C36 0 45 6 50 14 C55 6 64 0 75 0 C89 0 100 9 100 22 C100 36 90 56 50 86 Z"/></clipPath></defs>
+        <path class="contour" d="M50 86 C10 56 0 36 0 22 C0 9 11 0 25 0 C36 0 45 6 50 14 C55 6 64 0 75 0 C89 0 100 9 100 22 C100 36 90 56 50 86 Z"/>
+        <g clip-path="url(#formeG)">
+          <rect class="vague" id="vagueG" x="-5" y="90" width="110" height="95"/>
+          <rect class="remplissage" id="remplG" x="-5" y="90" width="110" height="95"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="coeur droite" id="coeurD">
+      <svg viewBox="0 0 100 90">
+        <defs><clipPath id="formeD"><path d="M50 86 C10 56 0 36 0 22 C0 9 11 0 25 0 C36 0 45 6 50 14 C55 6 64 0 75 0 C89 0 100 9 100 22 C100 36 90 56 50 86 Z"/></clipPath></defs>
+        <path class="contour" d="M50 86 C10 56 0 36 0 22 C0 9 11 0 25 0 C36 0 45 6 50 14 C55 6 64 0 75 0 C89 0 100 9 100 22 C100 36 90 56 50 86 Z"/>
+        <g clip-path="url(#formeD)">
+          <rect class="vague" id="vagueD" x="-5" y="90" width="110" height="95"/>
+          <rect class="remplissage" id="remplD" x="-5" y="90" width="110" height="95"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <p class="message" id="message" aria-live="polite">Même pas une étincelle.</p>
+
+  <div class="curseur-bloc a">
+    <div class="entete">
+      <label class="etiquette" for="scoreA">Calypso</label>
+      <span class="chiffre" id="chiffreA">0<small>/100</small></span>
+    </div>
+    <input type="range" class="a" id="scoreA" min="0" max="100" step="1" value="0">
+    <div class="bornes"><span>0</span><span>100</span></div>
+  </div>
+
+  <div class="curseur-bloc b">
+    <div class="entete">
+      <label class="etiquette" for="scoreB">Kéliann</label>
+      <span class="chiffre" id="chiffreB">0<small>/100</small></span>
+    </div>
+    <input type="range" class="b" id="scoreB" min="0" max="100" step="1" value="0">
+    <div class="bornes"><span>0</span><span>100</span></div>
+  </div>
+
+  <button class="copier" id="copier" type="button">Copier nos scores</button>
+  <p class="confirmation" id="confirmation" aria-live="polite"></p>
+  <p class="enregistre">Les scores sont enregistrés sur cet appareil.</p>
+</main>
+
+<script>
+  var CLE = "my-score:v2";
+  var scene = document.getElementById("scene");
+  var coeurG = document.getElementById("coeurG");
+  var coeurD = document.getElementById("coeurD");
+  var message = document.getElementById("message");
+  var bouton = document.getElementById("copier");
+  var confirmation = document.getElementById("confirmation");
+  var curseurs = { a: document.getElementById("scoreA"), b: document.getElementById("scoreB") };
+  var chiffres = { a: document.getElementById("chiffreA"), b: document.getElementById("chiffreB") };
+  var reduit = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var paliers = [
+    { max: 9,   texte: "Même pas une étincelle." },
+    { max: 24,  texte: "Un petit coup d’œil, rien de plus." },
+    { max: 39,  texte: "Ça commence à intriguer." },
+    { max: 54,  texte: "On y pense un peu trop souvent." },
+    { max: 69,  texte: "Ça devient sérieux, là." },
+    { max: 84,  texte: "Ça craque des deux côtés, avouez." },
+    { max: 99,  texte: "Complètement accros." }
+  ];
+
+  var couleurs = ["#ff3d6e", "#ffa183", "#ffd6e0", "#ff7aa0"];
+  var enMatch = false;
+  var dernierTexte = "";
+
+  function valeurs() {
+    return { a: parseInt(curseurs.a.value, 10), b: parseInt(curseurs.b.value, 10) };
+  }
+
+  function texteGlobal(a, b) {
+    if (a >= 90 && b >= 90) return "Perdu(e)s d’amour tous les deux. C’est un match !";
+    if (Math.abs(a - b) >= 40) return "Les deux cœurs ne battent pas au même rythme.";
+    var moy = (a + b) / 2;
+    for (var i = 0; i < paliers.length; i++) { if (moy <= paliers[i].max) return paliers[i].texte; }
+    return paliers[paliers.length - 1].texte;
+  }
+
+  function remplir(idRempl, idVague, n) {
+    var niveau = 90 - (n / 100) * 90;
+    document.getElementById(idRempl).setAttribute("y", niveau);
+    document.getElementById(idVague).setAttribute("y", Math.max(niveau - 4, -4));
+  }
+
+  function sauvegarder(v) {
+    try { localStorage.setItem(CLE, JSON.stringify(v)); } catch (e) {}
+  }
+
+  function charger() {
+    try {
+      var v = JSON.parse(localStorage.getItem(CLE));
+      if (v && v.a >= 0 && v.a <= 100 && v.b >= 0 && v.b <= 100) return v;
+    } catch (e) {}
+    return { a: 0, b: 0 };
+  }
+
+  function rythme(coeur, n) {
+    var t = n / 100;
+    coeur.style.setProperty("--duree", (2.4 - 1.85 * t).toFixed(2) + "s");
+    coeur.style.setProperty("--amp", (0.02 + 0.09 * t).toFixed(3));
+  }
+
+  function flotter() {
+    var v = valeurs();
+    var moy = (v.a + v.b) / 2;
+    if (!reduit && moy >= 10 && !document.hidden) {
+      var el = document.createElement("span");
+      el.className = "flottant";
+      el.textContent = "♥";
+      el.style.left = (50 + (Math.random() * 40 - 20)) + "%";
+      el.style.color = couleurs[Math.floor(Math.random() * couleurs.length)];
+      el.style.fontSize = (0.8 + Math.random() * 1.1 + moy / 100) + "rem";
+      scene.appendChild(el);
+      var dx = Math.random() * 90 - 45;
+      var haut = 120 + Math.random() * 90;
+      var anim = el.animate([
+        { transform: "translate(0, 0) scale(0.6)", opacity: 0 },
+        { transform: "translate(" + (dx / 2) + "px, " + (-haut / 2) + "px) scale(1)", opacity: 1, offset: 0.35 },
+        { transform: "translate(" + dx + "px, " + (-haut) + "px) scale(1.1)", opacity: 0 }
+      ], { duration: 1800 + Math.random() * 900, easing: "ease-out" });
+      anim.onfinish = function () { el.remove(); };
+    }
+    setTimeout(flotter, 950 - 800 * (moy / 100));
+  }
+
+  function explosion() {
+    if (reduit) return;
+    for (var i = 0; i < 28; i++) {
+      var el = document.createElement("span");
+      el.className = "flottant";
+      el.textContent = "♥";
+      el.style.left = "50%";
+      el.style.bottom = "46%";
+      el.style.color = couleurs[i % couleurs.length];
+      el.style.fontSize = (1 + Math.random() * 1.4) + "rem";
+      scene.appendChild(el);
+      var angle = (Math.PI * 2 * i) / 28 + Math.random() * 0.3;
+      var dist = 90 + Math.random() * 110;
+      var a = el.animate([
+        { transform: "translate(0, 0) scale(0.4) rotate(0deg)", opacity: 1 },
+        { transform: "translate(" + Math.cos(angle) * dist + "px, " + Math.sin(angle) * dist + "px) scale(1.2) rotate(" + (Math.random() * 120 - 60) + "deg)", opacity: 0 }
+      ], { duration: 1100 + Math.random() * 500, easing: "cubic-bezier(.1,.7,.3,1)" });
+      a.onfinish = (function (e) { return function () { e.remove(); }; })(el);
+    }
+  }
+
+  function sauter(cle) {
+    var c = chiffres[cle];
+    c.classList.remove("saute");
+    void c.offsetWidth;
+    c.classList.add("saute");
+  }
+
+  function mettreAJour(cleModifiee) {
+    var v = valeurs();
+    var moy = (v.a + v.b) / 2;
+    var t = moy / 100;
+
+    ["a", "b"].forEach(function (k) {
+      chiffres[k].innerHTML = v[k] + "<small>/100</small>";
+      curseurs[k].style.setProperty("--p", v[k]);
+      curseurs[k].setAttribute("aria-valuetext", v[k] + " sur 100");
+    });
+    if (cleModifiee) sauter(cleModifiee);
+
+    var texte = texteGlobal(v.a, v.b);
+    if (texte !== dernierTexte) {
+      message.textContent = texte;
+      message.classList.remove("change");
+      void message.offsetWidth;
+      message.classList.add("change");
+      dernierTexte = texte;
+    }
+
+    // Un cœur par curseur, qui se rapprochent selon la moyenne
+    remplir("remplG", "vagueG", v.a);
+    remplir("remplD", "vagueD", v.b);
+    rythme(coeurG, v.a);
+    rythme(coeurD, v.b);
+    coeurG.style.setProperty("--dx", (-(80 - 62 * t)) + "px");
+    coeurD.style.setProperty("--dx", (80 - 62 * t) + "px");
+    coeurG.style.setProperty("--rot", (-6 + 20 * t) + "deg");
+    coeurD.style.setProperty("--rot", (6 - 20 * t) + "deg");
+
+    var match = v.a >= 90 && v.b >= 90;
+    if (match) {
+      scene.classList.add("match");
+      if (!enMatch) explosion();
+    } else {
+      scene.classList.remove("match");
+    }
+    enMatch = match;
+
+    sauvegarder(v);
+  }
+
+  curseurs.a.addEventListener("input", function () { mettreAJour("a"); });
+  curseurs.b.addEventListener("input", function () { mettreAJour("b"); });
+
+  bouton.addEventListener("click", function () {
+    var v = valeurs();
+    var phrase = "Calypso : " + v.a + "/100. Kéliann : " + v.b + "/100. " + texteGlobal(v.a, v.b);
+    var ok = function () { confirmation.textContent = "Scores copiés."; };
+    var ko = function () { confirmation.textContent = "Copie impossible, recopie les scores à la main."; };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(phrase).then(ok, ko);
+      } else { ko(); }
+    } catch (e) { ko(); }
+  });
+
+  var depart = charger();
+  curseurs.a.value = depart.a;
+  curseurs.b.value = depart.b;
+  mettreAJour();
+  flotter();
+</script>
+</body>
+</html>
