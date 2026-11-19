@@ -5,6 +5,7 @@ import {
   chargerLocal, sauverLocal, valider, borne, jourLocal,
   normaliserCode, afficherCode, Nuage, nuageConfigure
 } from "./store.js";
+import { phrase, cleActuelle } from "./phrases.js";
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
@@ -31,24 +32,10 @@ const derniereSaisie = { a: 0, b: 0 };
 /* ==========================================================
    Textes
    ========================================================== */
-const PALIERS = [
-  [9, "Même pas une étincelle."],
-  [24, "Un petit coup d’œil, rien de plus."],
-  [39, "Ça commence à intriguer."],
-  [54, "On y pense un peu trop souvent."],
-  [69, "Ça devient sérieux, là."],
-  [84, "Ça craque des deux côtés, avouez."],
-  [100, "Complètement accros."]
-];
 const scoreCommun = (a, b) => Math.round(Math.sqrt(a * b));
 const estMatch = (a, b) => a >= 90 && b >= 90;
 
-function texteGlobal(a, b) {
-  if (estMatch(a, b)) return "Perdu(e)s d’amour tous les deux. C’est un match !";
-  if (Math.abs(a - b) >= 40) return "Les deux cœurs ne battent pas au même rythme.";
-  const moy = (a + b) / 2;
-  return (PALIERS.find(([max]) => moy <= max) || PALIERS.at(-1))[1];
-}
+const texteGlobal = (a, b) => phrase(a, b, etat.noms);
 
 /* ==========================================================
    Petits outils d’interface
@@ -115,10 +102,10 @@ function rendreScores(cleModifiee) {
   ui.commun.textContent = scoreCommun(a, b);
 
   const texte = texteGlobal(a, b);
-  if (texte !== dernierTexte) {
-    ui.message.textContent = texte;
-    relancer(ui.message, "change");
-    dernierTexte = texte;
+  if (texte !== ui.message.textContent) ui.message.textContent = texte;
+  if (cleActuelle() !== dernierTexte) {
+    relancer(ui.message, "change"); // animation seulement quand la situation change
+    dernierTexte = cleActuelle();
   }
 
   remplir("remplG", "vagueG", a);
@@ -465,6 +452,7 @@ for (const [id, k] of [["#nomA", "a"], ["#nomB", "b"]]) {
     etat.noms[k] = v;
     sauverLocal(etat);
     $$(`[data-nom="${k}"]`).forEach((el) => { el.textContent = v; });
+    rendreScores();
     clearTimeout(minuterieNoms);
     minuterieNoms = setTimeout(() => nuage.envoyerNoms(etat.noms).catch(() => statut("erreur")), 500);
   });
