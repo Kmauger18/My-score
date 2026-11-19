@@ -13,7 +13,7 @@
 1. [Console Firebase](https://console.firebase.google.com) → créer un projet (ou réutiliser un existant).
 2. *Ajouter une application* → **Web** → copier `firebaseConfig` dans `js/firebase-config.js`.
 3. *Authentication* → *Méthodes de connexion* → activer **Anonyme**.
-4. *Realtime Database* → *Créer une base de données* (région `europe-west1`, mode verrouillé).
+4. *Realtime Database* → *Créer une base de données* (mode verrouillé).
 5. Onglet **Règles** → coller le contenu de `database.rules.json` → **Publier**.
 6. *Authentication* → *Paramètres* → *Domaines autorisés* → ajouter `kmauger18.github.io`.
 

@@ -16,8 +16,8 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyBNO5HHW0nv-C_FyyGEUH0FgY15xw7Rrd4",
   authDomain: "my-score-b2b95.firebaseapp.com",
-  // Région Belgique (europe-west1). Si tu choisis une autre région, recopie l’URL affichée dans Realtime Database.
-  databaseURL: "https://my-score-b2b95-default-rtdb.europe-west1.firebasedatabase.app",
+  // Base Realtime Database en région États-Unis (us-central1)
+  databaseURL: "https://my-score-b2b95-default-rtdb.firebaseio.com",
   projectId: "my-score-b2b95",
   storageBucket: "my-score-b2b95.firebasestorage.app",
   messagingSenderId: "761575856869",
