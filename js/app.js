@@ -288,6 +288,16 @@ function toutRendre() {
 /* ==========================================================
    Synchronisation
    ========================================================== */
+function messageErreur(e) {
+  const t = String((e && (e.code || e.message)) || "");
+  if (/configuration-not-found|CONFIGURATION_NOT_FOUND|operation-not-allowed|admin-restricted/i.test(t))
+    return "Active la connexion « Anonyme » dans Firebase › Authentication.";
+  if (/unauthorized-domain|requests-from-referer/i.test(t)) return "Ajoute ce site aux domaines autorisés de Firebase.";
+  if (/permission[_-]denied/i.test(t)) return "Accès refusé : vérifie les règles de la Realtime Database.";
+  if (/network|failed to fetch/i.test(t)) return "Pas de connexion internet.";
+  return "Erreur Firebase : " + (t || "inconnue");
+}
+
 const enAttente = new Set();
 let minuterieEnvoi = null;
 
@@ -330,11 +340,11 @@ async function brancherEspace(code) {
     await nuage.ecouter(code, {
       donnees: recevoir,
       connexion: (ok) => { connecte = ok; if (!minuterieEnvoi) statut(ok ? "sync" : "horsligne"); },
-      erreur: (e) => { console.error(e); statut("erreur"); toast("Accès à l’espace refusé."); }
+      erreur: (e) => { console.error(e); statut("erreur"); toast(messageErreur(e)); }
     });
   } catch (e) {
     statut("erreur");
-    toast("Impossible de joindre Firebase.");
+    toast(messageErreur(e));
   }
 }
 
@@ -354,7 +364,7 @@ async function creerEspace() {
   } catch (e) {
     console.error(e);
     statut("erreur");
-    toast("Création impossible. Vérifie la config Firebase.");
+    toast(messageErreur(e));
   } finally {
     bouton.disabled = false;
   }
@@ -376,7 +386,7 @@ async function rejoindreEspace(saisie) {
   } catch (e) {
     console.error(e);
     statut("erreur");
-    toast("Connexion impossible.");
+    toast(messageErreur(e));
     return false;
   }
 }

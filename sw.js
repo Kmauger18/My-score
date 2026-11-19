@@ -1,5 +1,5 @@
 // Service worker : l’appli s’ouvre même sans réseau.
-const CACHE = "my-score-v3.1.0";
+const CACHE = "my-score-v3.1.1";
 const COQUILLE = [
   "./", "index.html", "css/style.css",
   "js/app.js", "js/store.js", "js/phrases.js", "js/firebase-config.js",
