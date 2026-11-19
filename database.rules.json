@@ -1,0 +1,35 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "espaces": {
+      "$code": {
+        ".read": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{8}$/)",
+        ".write": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{8}$/) && newData.exists()",
+        ".validate": "newData.hasChildren(['noms', 'scores'])",
+        "creeLe": { ".validate": "newData.isNumber()" },
+        "noms": {
+          ".validate": "newData.hasChildren(['a', 'b'])",
+          "a": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+          "b": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+          "$autre": { ".validate": false }
+        },
+        "scores": {
+          "a": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "b": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+          "maj": { ".validate": "newData.isNumber()" },
+          "$autre": { ".validate": false }
+        },
+        "historique": {
+          "$jour": {
+            ".validate": "$jour.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && newData.hasChildren(['a', 'b'])",
+            "a": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "b": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "$autre": { ".validate": false }
+          }
+        },
+        "$autre": { ".validate": false }
+      }
+    }
+  }
+}
