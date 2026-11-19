@@ -253,15 +253,28 @@ input[type="range"]:focus-visible::-moz-range-thumb { filter: drop-shadow(0 0 8p
 .legende i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
 .l-a { background: var(--framboise); } .l-b { background: var(--peche); }
 
-.journal { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; }
-.journal li { display: grid; grid-template-columns: 1fr auto auto auto; gap: 12px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--verre-bord); font-size: 0.92rem; }
-.journal li:last-child { border-bottom: 0; }
-.journal .date { color: var(--texte-doux); }
-.journal .date::first-letter { text-transform: uppercase; }
-.journal .va { color: #ff7aa0; font-weight: 700; font-variant-numeric: tabular-nums; }
-.journal .vb { color: var(--peche); font-weight: 700; font-variant-numeric: tabular-nums; }
-.journal .vc { font-family: var(--display); font-weight: 700; min-width: 2.6ch; text-align: right; }
-.journal .match::after { content: " ♥"; color: var(--framboise); }
+.filtres { margin: 4px 0 8px; }
+.journal { list-style: none; margin: 0; padding: 0; max-height: 460px; overflow-y: auto; }
+.journal .vide { text-align: center; padding: 30px 10px; }
+.journal .jour {
+  padding: 14px 2px 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--texte-doux); border-bottom: 1px solid var(--verre-bord);
+}
+.journal .evt {
+  display: grid; grid-template-columns: 10px 1fr auto auto 3.2em; gap: 10px; align-items: center;
+  padding: 9px 2px; border-bottom: 1px solid var(--verre-bord); font-size: 0.92rem;
+}
+.journal .evt.a .pastille { background: var(--framboise); box-shadow: 0 0 8px var(--framboise); }
+.journal .evt.b .pastille { background: var(--peche); box-shadow: 0 0 8px var(--peche); }
+.journal .qui { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.journal .valeurs { font-variant-numeric: tabular-nums; color: var(--texte-doux); }
+.journal .fleche { margin: 0 5px; opacity: 0.6; }
+.journal .vers { color: var(--ivoire); font-family: var(--display); font-size: 1.05rem; }
+.journal .delta { font-size: 0.75rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.journal .delta.monte { color: #86efac; background: rgba(74, 222, 128, 0.12); }
+.journal .delta.baisse { color: #fca5a5; background: rgba(248, 113, 113, 0.12); }
+.journal time { text-align: right; font-size: 0.8rem; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
+#plusJournal { margin-top: 10px; }
 
 .pied { text-align: center; font-size: 0.75rem; color: rgba(255, 214, 224, 0.4); margin-top: 24px; }
 

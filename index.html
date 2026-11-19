@@ -106,7 +106,7 @@
     <h1 id="titre-historique" class="titre">Notre historique</h1>
 
     <div class="stats">
-      <div class="stat"><span class="stat-valeur" id="statJours">0</span><span class="stat-label">jours notés</span></div>
+      <div class="stat"><span class="stat-valeur" id="statChangements">0</span><span class="stat-label">changements</span></div>
       <div class="stat"><span class="stat-valeur" id="statMoy">–</span><span class="stat-label">score commun moyen</span></div>
       <div class="stat"><span class="stat-valeur" id="statMatch">0</span><span class="stat-label">jours de match</span></div>
     </div>
@@ -128,8 +128,16 @@
     </div>
 
     <div class="carte">
-      <h2>Jour par jour</h2>
+      <div class="carte-entete">
+        <h2>Tous les changements</h2>
+      </div>
+      <div class="segment petit filtres" role="group" aria-label="Filtrer par personne">
+        <button type="button" data-filtre="tous" class="actif">Tous</button>
+        <button type="button" data-filtre="a"><span data-nom="a">Calypso</span> · <span id="compteA">0</span></button>
+        <button type="button" data-filtre="b"><span data-nom="b">Kéliann</span> · <span id="compteB">0</span></button>
+      </div>
       <ol class="journal" id="journal"></ol>
+      <button class="bouton plein discret" id="plusJournal" type="button" hidden>Afficher plus</button>
     </div>
   </section>
 
@@ -190,7 +198,7 @@
       </div>
     </div>
 
-    <p class="pied">My Score · v3.0</p>
+    <p class="pied">My Score · v3.2</p>
   </section>
 </main>
 

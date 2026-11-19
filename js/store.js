@@ -11,7 +11,8 @@ const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sans 0/O, 1/I
 export const DEFAUT = {
   noms: { a: "Calypso", b: "Kéliann" },
   scores: { a: 0, b: 0 },
-  historique: {},       // { "2026-11-19": { a: 72, b: 80 } }
+  historique: {},       // { "2026-11-19": { a: 72, b: 80 } } — dernier score de chaque jour (graphique)
+  journal: {},          // { id: { qui: "a", de: 45, a: 72, t: 1763561520000 } } — chaque changement
   moi: "deux",          // "a" | "b" | "deux"
   espace: null          // code de l’espace partagé (8 caractères) ou null
 };
@@ -53,6 +54,22 @@ function nettoyerHistorique(h) {
   return sortie;
 }
 
+const MAX_JOURNAL = 3000;
+export const nouvelId = () => Date.now().toString(36) + "-" + Array.from(crypto.getRandomValues(new Uint8Array(4)), (o) => (o % 36).toString(36)).join("");
+
+export function nettoyerJournal(j) {
+  const entrees = [];
+  if (j && typeof j === "object") {
+    for (const [id, v] of Object.entries(j)) {
+      if (/^[a-z0-9-]{4,30}$/.test(id) && v && (v.qui === "a" || v.qui === "b") && Number.isFinite(v.t)) {
+        entrees.push([id, { qui: v.qui, de: borne(v.de), a: borne(v.a), t: Math.round(v.t) }]);
+      }
+    }
+  }
+  entrees.sort((x, y) => x[1].t - y[1].t);
+  return Object.fromEntries(entrees.slice(-MAX_JOURNAL));
+}
+
 export function valider(brut) {
   const e = structuredClone(DEFAUT);
   if (!brut || typeof brut !== "object") return e;
@@ -61,6 +78,7 @@ export function valider(brut) {
   e.scores.a = borne(brut.scores?.a);
   e.scores.b = borne(brut.scores?.b);
   e.historique = nettoyerHistorique(brut.historique);
+  e.journal = nettoyerJournal(brut.journal);
   if (["a", "b", "deux"].includes(brut.moi)) e.moi = brut.moi;
   e.espace = normaliserCode(brut.espace);
   return e;
@@ -131,7 +149,8 @@ export class Nuage {
       creeLe: this.fb.serverTimestamp(),
       noms: etat.noms,
       scores: { ...etat.scores, maj: this.fb.serverTimestamp() },
-      historique: etat.historique
+      historique: etat.historique,
+      journal: etat.journal
     });
     return code;
   }
@@ -169,6 +188,12 @@ export class Nuage {
     return this.fb.update(this.ref(), maj);
   }
 
+  /** Ajoute un changement au journal partagé. */
+  envoyerChangement(id, evt) {
+    if (!this.code) return Promise.resolve();
+    return this.fb.set(this.ref("journal/" + id), evt);
+  }
+
   envoyerNoms(noms) {
     if (!this.code) return Promise.resolve();
     return this.fb.update(this.ref("noms"), noms);
@@ -183,11 +208,12 @@ export class Nuage {
       "scores/maj": this.fb.serverTimestamp()
     };
     for (const [jour, v] of Object.entries(etat.historique)) maj["historique/" + jour] = v;
+    for (const [id, v] of Object.entries(etat.journal)) maj["journal/" + id] = v;
     return this.fb.update(this.ref(), maj);
   }
 
   viderHistorique() {
     if (!this.code) return Promise.resolve();
-    return this.fb.set(this.ref("historique"), null);
+    return this.fb.update(this.ref(), { historique: null, journal: null });
   }
 }

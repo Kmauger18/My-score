@@ -28,6 +28,16 @@
             "$autre": { ".validate": false }
           }
         },
+        "journal": {
+          "$id": {
+            ".validate": "$id.matches(/^[a-z0-9-]{4,30}$/) && newData.hasChildren(['qui', 'de', 'a', 't'])",
+            "qui": { ".validate": "newData.val() === 'a' || newData.val() === 'b'" },
+            "de": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "a": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+            "t": { ".validate": "newData.isNumber()" },
+            "$autre": { ".validate": false }
+          }
+        },
         "$autre": { ".validate": false }
       }
     }

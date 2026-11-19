@@ -3,7 +3,7 @@
 // ==========================================================
 import {
   chargerLocal, sauverLocal, valider, borne, jourLocal,
-  normaliserCode, afficherCode, Nuage, nuageConfigure
+  normaliserCode, afficherCode, Nuage, nuageConfigure, nouvelId
 } from "./store.js";
 import { phrase, cleActuelle } from "./phrases.js";
 
@@ -246,35 +246,64 @@ function rendreGraphique(entrees) {
   zone.innerHTML = svg + "</svg>";
 }
 
+const fmtHeure = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
+let filtreJournal = "tous";
+let limiteJournal = 150;
+
 function rendreHistorique() {
-  const toutes = Object.entries(etat.historique);
-  $("#statJours").textContent = toutes.length;
-  $("#statMoy").textContent = toutes.length
-    ? Math.round(toutes.reduce((s, [, v]) => s + scoreCommun(v.a, v.b), 0) / toutes.length)
+  const jours = Object.values(etat.historique);
+  const evts = Object.values(etat.journal);
+  $("#statChangements").textContent = evts.length;
+  $("#statMoy").textContent = jours.length
+    ? Math.round(jours.reduce((s, v) => s + scoreCommun(v.a, v.b), 0) / jours.length)
     : "–";
-  $("#statMatch").textContent = toutes.filter(([, v]) => estMatch(v.a, v.b)).length;
+  $("#statMatch").textContent = jours.filter((v) => estMatch(v.a, v.b)).length;
+  $("#compteA").textContent = evts.filter((e) => e.qui === "a").length;
+  $("#compteB").textContent = evts.filter((e) => e.qui === "b").length;
 
   rendreGraphique(entreesPeriode());
+  rendreJournal();
+}
 
-  const journal = $("#journal");
-  journal.textContent = "";
-  const tri = toutes.sort(([x], [y]) => y.localeCompare(x));
+function rendreJournal() {
+  const liste = $("#journal");
+  liste.textContent = "";
+  const tri = Object.entries(etat.journal)
+    .filter(([, e]) => filtreJournal === "tous" || e.qui === filtreJournal)
+    .sort(([, x], [, y]) => y.t - x.t);
   if (!tri.length) {
-    journal.innerHTML = '<li class="vide" style="display:block">Rien pour l’instant.</li>';
+    liste.innerHTML = '<li class="vide">Aucun changement noté pour l’instant.<br>Chaque fois que l’un de vous bouge son curseur, ça s’inscrit ici.</li>';
+    $("#plusJournal").hidden = true;
     return;
   }
-  for (const [jour, v] of tri) {
+  let jourPrecedent = "";
+  for (const [, e] of tri.slice(0, limiteJournal)) {
+    const d = new Date(e.t);
+    const jour = jourLocal(d);
+    if (jour !== jourPrecedent) {
+      const titre = document.createElement("li");
+      titre.className = "jour";
+      titre.textContent = jour === jourLocal() ? "Aujourd’hui" : fmtLong.format(d);
+      liste.appendChild(titre);
+      jourPrecedent = jour;
+    }
+    const monte = e.a > e.de;
     const li = document.createElement("li");
-    li.innerHTML = `<span class="date"></span><span class="va"></span><span class="vb"></span><span class="vc"></span>`;
-    li.children[0].textContent = jour === jourLocal() ? "Aujourd’hui" : fmtLong.format(enDate(jour));
-    li.children[1].textContent = v.a;
-    li.children[1].title = etat.noms.a;
-    li.children[2].textContent = v.b;
-    li.children[2].title = etat.noms.b;
-    li.children[3].textContent = scoreCommun(v.a, v.b);
-    li.children[3].classList.toggle("match", estMatch(v.a, v.b));
-    journal.appendChild(li);
+    li.className = "evt " + e.qui;
+    li.innerHTML = '<span class="pastille"></span><span class="qui"></span><span class="valeurs"><span class="de"></span><span class="fleche"></span><b class="vers"></b></span><span class="delta"></span><time></time>';
+    li.querySelector(".qui").textContent = etat.noms[e.qui];
+    li.querySelector(".de").textContent = e.de;
+    li.querySelector(".fleche").textContent = "→";
+    li.querySelector(".vers").textContent = e.a;
+    const delta = li.querySelector(".delta");
+    delta.textContent = (monte ? "+" : "−") + Math.abs(e.a - e.de);
+    delta.classList.add(monte ? "monte" : "baisse");
+    const t = li.querySelector("time");
+    t.dateTime = d.toISOString();
+    t.textContent = fmtHeure.format(d);
+    liste.appendChild(li);
   }
+  $("#plusJournal").hidden = tri.length <= limiteJournal;
 }
 
 function toutRendre() {
@@ -327,9 +356,13 @@ function recevoir(d) {
   const maintenant = Date.now();
   for (const k of ["a", "b"]) {
     // On ne remplace pas un curseur que l’on est en train de bouger
-    if (maintenant - derniereSaisie[k] > 1500) etat.scores[k] = v.scores[k];
+    if (maintenant - derniereSaisie[k] > 1500) {
+      etat.scores[k] = v.scores[k];
+      valeurEnregistree[k] = v.scores[k];
+    }
   }
   etat.historique = v.historique;
+  etat.journal = v.journal;
   sauverLocal(etat);
   toutRendre();
 }
@@ -403,7 +436,24 @@ function quitterEspace(silencieux) {
 /* ==========================================================
    Événements
    ========================================================== */
+// Valeur de départ de chaque curseur, pour noter « de → à » au relâchement
+const valeurEnregistree = { a: etat.scores.a, b: etat.scores.b };
+
+function noterChangement(k) {
+  const de = valeurEnregistree[k];
+  const a = etat.scores[k];
+  if (de === a) return;
+  valeurEnregistree[k] = a;
+  const id = nouvelId();
+  const evt = { qui: k, de, a, t: Date.now() };
+  etat.journal[id] = evt;
+  sauverLocal(etat);
+  if (etat.espace && nuage.code) nuage.envoyerChangement(id, evt).catch((e) => { console.error(e); statut("erreur"); });
+  if (!$("#vue-historique").hidden) rendreHistorique();
+}
+
 for (const k of ["a", "b"]) {
+  ui.curseurs[k].addEventListener("change", () => noterChangement(k));
   ui.curseurs[k].addEventListener("input", () => {
     etat.scores[k] = borne(ui.curseurs[k].value);
     etat.historique[jourLocal()] = { ...etat.scores };
@@ -434,6 +484,15 @@ $$("[data-periode]").forEach((b) => b.addEventListener("click", () => {
   $$("[data-periode]").forEach((x) => x.classList.toggle("actif", x === b));
   rendreGraphique(entreesPeriode());
 }));
+
+// Filtre du journal
+$$("[data-filtre]").forEach((b) => b.addEventListener("click", () => {
+  filtreJournal = b.dataset.filtre;
+  limiteJournal = 150;
+  $$("[data-filtre]").forEach((x) => x.classList.toggle("actif", x === b));
+  rendreJournal();
+}));
+$("#plusJournal").addEventListener("click", () => { limiteJournal += 150; rendreJournal(); });
 
 // Partager
 $("#partager").addEventListener("click", async () => {
@@ -493,7 +552,7 @@ $("#quitterEspace").addEventListener("click", () => {
 
 // Sauvegarde de secours
 $("#exporter").addEventListener("click", () => {
-  const donnees = { app: "my-score", version: 3, exporteLe: new Date().toISOString(), noms: etat.noms, scores: etat.scores, historique: etat.historique };
+  const donnees = { app: "my-score", version: 3, exporteLe: new Date().toISOString(), noms: etat.noms, scores: etat.scores, historique: etat.historique, journal: etat.journal };
   const url = URL.createObjectURL(new Blob([JSON.stringify(donnees, null, 2)], { type: "application/json" }));
   const lien = Object.assign(document.createElement("a"), { href: url, download: `my-score-${jourLocal()}.json` });
   document.body.appendChild(lien);
@@ -510,7 +569,8 @@ $("#importer").addEventListener("change", async (e) => {
     const brut = JSON.parse(await fichier.text());
     if (brut.app !== "my-score") throw new Error("format");
     const v = valider(brut);
-    etat = { ...v, historique: { ...etat.historique, ...v.historique }, moi: etat.moi, espace: etat.espace };
+    etat = { ...v, historique: { ...etat.historique, ...v.historique }, journal: { ...etat.journal, ...v.journal }, moi: etat.moi, espace: etat.espace };
+    Object.assign(valeurEnregistree, etat.scores);
     sauverLocal(etat);
     if (etat.espace) await nuage.envoyerTout(etat);
     toutRendre();
@@ -526,10 +586,13 @@ $("#reinitialiser").addEventListener("click", async () => {
   if (!confirm(msg)) return;
   etat.scores = { a: 0, b: 0 };
   etat.historique = {};
+  etat.journal = {};
+  Object.assign(valeurEnregistree, etat.scores);
   sauverLocal(etat);
   if (etat.espace) {
     try { await nuage.viderHistorique(); await nuage.envoyerScores(["a", "b"], etat.scores); } catch (_) { statut("erreur"); }
     etat.historique = {};
+    etat.journal = {};
   }
   toutRendre();
   toast("Tout est remis à zéro.");
