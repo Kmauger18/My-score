@@ -14,11 +14,12 @@
 //  Ces clés ne sont pas secrètes : c’est le fichier de règles qui protège les données.
 // ==========================================================
 export const firebaseConfig = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyBNO5HHW0nv-C_FyyGEUH0FgY15xw7Rrd4",
+  authDomain: "my-score-b2b95.firebaseapp.com",
+  // Région Belgique (europe-west1). Si tu choisis une autre région, recopie l’URL affichée dans Realtime Database.
+  databaseURL: "https://my-score-b2b95-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "my-score-b2b95",
+  storageBucket: "my-score-b2b95.firebasestorage.app",
+  messagingSenderId: "761575856869",
+  appId: "1:761575856869:web:0291f3cc5085b32a9b520c"
 };
